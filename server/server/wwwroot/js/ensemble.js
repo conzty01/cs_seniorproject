@@ -4,38 +4,47 @@
     const membersList = props.members;
     const memberItems = membersList.map((m) => <Member info={m} />);
     return (
-        <div id="ensembleContainer" className="container">
+        <div id="ensembleContainer" className="container-fluid">
             {memberItems}
         </div>
     );
 }
 
-function MemberRow(props) {
-    // The rows in the EnsembleContainer that hold the Members.
-}
-
 function Member(props) {
     // The base component for a member.
+    //console.log(props);
+    const link = "ViewEnsemble/" + props.info.id.toString();
     return (
-        <div)
+        <a className="ensembleLink" href={link}>
+            <img src={props.info.avatarURL} title={props.info.name} />
+        </a>
+    );
 }
 
-const e = {
-    name: 'The Beatles',
-    avatarURL: 'https://placekitten.com/g/64/64',
-    profileID: 1,
+function pageLoaded() {
+    /* The way that the ensembles data is being passed into
+     * the view requires the javascript to find all of the 
+     * member tags and assemble the appropriate props to be
+     * passed to the EnsembleContainer. */
+
+    let eList = document.getElementsByTagName("Member");
+    //console.log(eList);
+    let propList = [];
+    for (let m of eList) {
+        let props = {}
+        props.id = m.dataset.id;
+        props.avatarURL = m.dataset.avatarURL;
+        props.name = m.dataset.name;
+
+        propList.push(props)
+    }
+    //console.log(propList);
+    return propList;
 }
 
-const n = {
-    name: 'Solo',
-    avatarURL: 'https://placekitten.com/g/64/64',
-    profileID: null,
-}
-
-const eList = [e, n];
-console.log(eList);
+const propList = pageLoaded();
 
 ReactDOM.render(
-    <EnsembleContainer members={eList} />,
+    <EnsembleContainer members={propList} />,
     document.getElementById('ensembles')
 );
