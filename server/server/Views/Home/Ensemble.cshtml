@@ -1,0 +1,288 @@
+@model server.Models.EnsembleModel
+
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@section Stylesheets {
+    <link rel="stylesheet" href="~/css/profile.css" />
+    <link rel="stylesheet" href="~/css/post.css" />
+}
+
+@section Scripts {
+
+    <script src="~/js/ensemble.js" type="text/jsx">
+    </script>
+    <script src="~/js/posts.js" type="text/jsx"></script>
+    <script>
+        window.profileType = "@Model.ViewType";
+    </script>
+}
+
+<div class="container">
+    <div class="row">
+        <div id="profile" class="col-md-3">
+            <img id="profPic" src="@Model.Ensemble.Pic_Url" />
+
+            @if (Model.isOwner == true)
+            {
+                <div>
+                    <a asp-action="Edit" asp-route-id="@Model.Ensemble.EnsembleId">Edit</a>
+                </div>
+            }
+
+            <div id="bio">
+                @Model.Ensemble.Bio
+
+
+            </div>
+            <div id="auditions">
+                @foreach (var ins in Model.Ensemble.Audition)
+                {
+                    <h1>@ins.AuditionId</h1>
+                    <h1>@ins.Instrument.Instrument_Name</h1>
+                    <h1>@ins.Open_Date</h1>
+                    <h1>@ins.Closed_Date</h1>
+                    <h1>@ins.Audition_Location</h1>
+                    <h1>@ins.Audition_Description</h1>
+                    <a asp-action="Audition" asp-route-id="@ins.AuditionId">  PLUG IN  </a>
+                }
+
+
+            </div>
+            <div id="location">
+                <span class="glyphicon glyphicon-map-marker"></span>
+                @Model.Ensemble.City
+            </div>
+            <hr />
+            <div id="ensembles">
+                @foreach (var item in Model.Profiles)
+                {
+                    <Member data-id="@item.ProfileId" data-avatarurl="@item.Pic_Url" data-name="@item.First_Name @item.Last_Name" />
+                }
+            </div>
+        </div>
+
+        <div id="posts" class="col-md-9">
+            <div class="row">
+                <div class="col">
+                    <h1 id="name">@Model.Ensemble.Ensemble_Name</h1>
+
+                    @if (Model.isOwner == true)
+                    {
+                        <div id="createPost" class="container">
+                            <form class="row" asp-action="CreatePost">
+                                <div class="col-xs-1">
+                                    <img class="tinyPic" src="@Model.Ensemble.Pic_Url" />
+                                </div>
+                                <div style="display:none">
+                                    <input name="PosterType" type="text" value="ensemble" />
+                                    <input name="Type" type="text" value="post" />
+                                    <input name="PosterIndex" type="text" value="@Model.Ensemble.EnsembleId" />
+                                </div>
+
+                                <div class="col-xs-11">
+                                    <textarea name="Text" class="inputPost" type="text" placeholder="Update your audience..."></textarea>
+
+                                    <div id="postButtons" class="form-group">
+                                        <button class="btn btn-primary">Post</button>
+                                        <label class="btn btn-secondary">
+                                            Attach Media <input type="file" hidden>
+                                        </label>
+                                    </div>
+
+                                </div>
+                            </form>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col">
+                    <hr />
+                </div>
+            </div>
+            <div class="row">
+                <div id="postCC" class="col">
+                    @foreach (var p in Model.Posts)
+                    {
+
+                        @if (p.Type == "gig")
+                        {
+                            <Post data-username="@Model.Ensemble.Ensemble_Name" data-type="@p.Type" data-avatar="@Model.Ensemble.Pic_Url" data-hasmedia="@false" data-text="@p.Text" />
+                        }
+                        else if (p.Type == "aud")
+                        {
+                            <Post data-username="@Model.Ensemble.Ensemble_Name" data-type="@p.Type" data-avatar="@Model.Ensemble.Pic_Url" data-hasmedia="@false" data-text="@p.Text" data-time="@p.Audition.Open_Date" data-place="@p.Audition.Audition_Location" data-pos="@p.Audition.Instrument_Name" data-audid="@p.Audition.AuditionId" />
+                        }
+                        else
+                        {
+                            if (p.MediaType != null)
+                            {
+                                <Post data-username="@Model.Ensemble.Ensemble_Name" data-type="@p.Type" data-avatar="@Model.Ensemble.Pic_Url" data-text="@p.Text" data-hasmedia="@true" data-mediaurl="@p.MediaUrl" data-mediatype="@p.MediaType" />
+                            }
+                            else
+                            {
+                                <Post data-username="@Model.Ensemble.Ensemble_Name" data-type="@p.Type" data-avatar="@Model.Ensemble.Pic_Url" data-text="@p.Text" data-hasmedia="@false" />
+                            }
+                        }
+
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (Model.isOwner == true)
+{
+    @* Only owners should be able to see the "createModal" *@
+
+    @if (Model.ViewType == "ensemble")
+    {
+        @* If the profile is an ensemble, then we want to hold auditions *@
+        <div id="createModal" class="modal">
+
+            <div class="modal-content">
+                <span class="close" onclick="hideModal()">&times;</span>
+                <form asp-controller="Home" asp-action="CreateAudition" method="post" class="container-fluid">
+                    <div style="display:none">
+                        <input name="userID" type="text" value="1" />
+                        <input name="ensID" type="text" value ="@Model.Ensemble.EnsembleId" />
+                    </div>
+                    <h2 style="text-align:center;font-weight:bold;">Hold an Audition!</h2>
+                    <hr />
+                    <div class="col-sm-6">
+                        <div class="row">
+                            <div class="col-sm-6">
+                                <div class="form-group">
+                                    <label for="audition_date">Auditions Begin<span class="red-ast">*</span></label>
+                                    <input type="date" name="audition_date" class="form-control" required />
+                                </div>
+                            </div>
+                            <div class="col-sm-6">
+                                <div class="form-group">
+                                    <label for="closed_date">Auditions Close<span class="red-ast">*</span></label>
+                                    <input type="date" name="closed_date" class="form-control" required />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <small class="form-text text-muted col-xs-12">
+                                The closing date should be the day <em>after</em> the last day of auditions. No auditions should be held on the closed date.
+
+                            </small>
+                        </div>
+                        <hr />
+                        <div class="row">
+                            <div class="form-group col-xs-12">
+                                <label for="location">Audition Location<span class="red-ast">*</span></label>
+                                <input type="text" class="form-control" name="location" placeholder="Nobal Recital Hall, 1234 N. West St., etc..." required />
+                            </div>
+                            <div class="form-group col-xs-12">
+                                <label asp-for="Instruments">What instrument are you looking for?<span class="red-ast">*</span></label>
+                                <span asp-validation-for="Instruments" class="text-danger"></span>
+                                @foreach (var ins in Model.Instruments)
+                                {
+                                    <div class="checkbox">
+                                        <label>
+                                            <input type="checkbox" name="SelectedInsId" value="@ins.Value" /> @ins.Text
+                                        </label>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                        <div class="row" style="margin-top:20px;">
+                            <button style="width:50%;font-size:20px;" class="btn btn-danger center-block">Post Audition</button>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="form-group">
+                            <label for="description">Audition Description</label>
+                            <textarea id="desc" name="description" class="form-control" placeholder="Prepared materials, contact information etc..."></textarea>
+                            <small class="form-text text-muted">Some useful information to include might be ways to sign up for an audition; What materials should be prepared; Your contact information; How long the audition slots are etc...</small>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+        </div>
+    }
+    else if (Model.ViewType == "profile")
+    {
+        @* If the profile is an profile, then we want to create ensembles *@
+        <div id="createModal" class="modal">
+
+            <div class="modal-content">
+                <span class="close" onclick="hideModal()">&times;</span>
+                <form asp-controller="Home" asp-action="CreateEnsemble" method="post" class="container-fluid">
+                    <div style="display:none">
+                        <input name="userID" type="text" value="1" />
+                    </div>
+                    <h2 style="text-align:center;font-weight:bold;">Form a Group!</h2>
+                    <hr />
+                    <div class="col-sm-6">
+                        <div class="form-group">
+                            <label for="name">Name<span class="red-ast">*</span></label>
+                            <input type="text" class="form-control" name="name" placeholder="Enter the name of the group" required />
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-6">
+                                <div class="form-group">
+                                    <label for="formed_date">Formed<span class="red-ast">*</span></label>
+                                    <input type="date" name="formed_date" class="form-control" required />
+                                </div>
+                            </div>
+                            <div class="col-sm-6">
+                                <div class="form-group">
+                                    <label for="disbanded_date">Disbanded</label>
+                                    <input type="date" name="disbanded_date" class="form-control" />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-6">
+                                <div class="form-group">
+                                    <label for="genre">Genre<span class="red-ast">*</span></label>
+                                    <input type="text" class="form-control" name="genre" placeholder="Jazz, Punk Rock, Symphony etc.." required />
+                                </div>
+                            </div>
+                            <div class="col-sm-6">
+                                <div class="form-group">
+                                    <label for="type">Group Type<span class="red-ast">*</span></label>
+                                    <input type="text" name="type" class="form-control" placeholder="Brass Band, Jazz Combo, Cover Band etc..." />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-6">
+                                <div class="form-group">
+                                    <label for="city">City<span class="red-ast">*</span></label>
+                                    <input type="text" name="city" class="form-control" required />
+                                </div>
+                            </div>
+                            <div class="col-sm-6">
+                                <div class="form-group">
+                                    <label for="state">State<span class="red-ast">*</span></label>
+                                    <input type="text" name="state" class="form-control" required />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row" style="margin-top:20px;">
+                            <button style="width:50%;font-size:20px;" class="btn btn-danger center-block">Create Group</button>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="form-group">
+                            <label for="description">Ensemble Bio</label>
+                            <textarea id="desc" name="bio" class="form-control" placeholder="Tell us about you!"></textarea>
+                        </div>
+                    </div>
+                </form>
+
+            </div>
+
+        </div>
+    }
+}
